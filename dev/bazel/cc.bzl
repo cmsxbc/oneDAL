@@ -57,7 +57,6 @@ def _cc_module_impl(ctx):
         cpus = ctx.attr._cpus[CpuInfo].enabled,
         cpu_defines = ctx.attr.cpu_defines,
         fpt_defines = ctx.attr.fpt_defines,
-        disable_mic = ctx.attr.disable_mic,
         srcs = ctx.files.srcs,
         public_hdrs = ctx.files.hdrs,
         private_hdrs = ctx.files.private_hdrs,
@@ -109,7 +108,6 @@ _cc_module = rule(
         "includes": attr.string_list(),
         "quote_includes": attr.string_list(),
         "system_includes": attr.string_list(),
-        "disable_mic": attr.bool(default=False),
         "_cpus": attr.label(
             default = "@config//:cpu",
         ),
@@ -214,7 +212,7 @@ cc_dynamic_lib = rule(
 )
 
 
-def _cc_test_impl(ctx):
+def _cc_exec_impl(ctx):
     if not ctx.attr.deps:
         return
     toolchain, feature_config = _init_cc_rule(ctx)
@@ -228,6 +226,7 @@ def _cc_test_impl(ctx):
         cc_toolchain = toolchain,
         feature_configuration = feature_config,
         linking_contexts = linking_contexts,
+        user_link_flags = ctx.attr.user_link_flags,
     )
     default_info = DefaultInfo(
         files = depset([ executable ]),
@@ -239,13 +238,27 @@ def _cc_test_impl(ctx):
     return [default_info]
 
 cc_test = rule(
-    implementation = _cc_test_impl,
+    implementation = _cc_exec_impl,
     attrs = {
         "lib_tags": attr.string_list(),
         "deps": attr.label_list(),
         "data": attr.label_list(allow_files=True),
+        "user_link_flags": attr.string_list(),
     },
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
     fragments = ["cpp"],
     test = True,
+)
+
+cc_executable = rule(
+    implementation = _cc_exec_impl,
+    attrs = {
+        "lib_tags": attr.string_list(),
+        "deps": attr.label_list(),
+        "data": attr.label_list(allow_files=True),
+        "user_link_flags": attr.string_list(),
+    },
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
+    fragments = ["cpp"],
+    executable = True,
 )

@@ -22,7 +22,42 @@ namespace oneapi::dal::backend::primitives {
 
 #ifdef ONEDAL_DATA_PARALLEL
 
-/// Computes correlation matrix and variances
+/// Compute means
+///
+/// @tparam Float Floating-point type used to perform computations
+///
+/// @param[in]  queue The queue
+/// @param[in]  data  The [n x p] input dataset
+/// @param[in]  sums  The [p] sums computed along each column of the data
+/// @param[out] means The [p] means for each feature
+template <typename Float>
+sycl::event means(sycl::queue& queue,
+                  const ndview<Float, 2>& data,
+                  const ndview<Float, 1>& sums,
+                  ndview<Float, 1>& means,
+                  const event_vector& deps = {});
+
+/// Computes covariance matrix
+///
+/// @tparam Float Floating-point type used to perform computations
+///
+/// @param[in]  queue The queue
+/// @param[in]  data  The [n x p] input dataset
+/// @param[in]  sums  The [p] sums computed along each column of the data
+/// @param[out] corr  The [p x p] correlation matrix
+/// @param[out] means The [p] means for each feature
+/// @param[out] vars  The [p] variances for each feature
+template <typename Float>
+sycl::event covariance(sycl::queue& queue,
+                       const ndview<Float, 2>& data,
+                       const ndview<Float, 1>& sums,
+                       const ndview<Float, 1>& means,
+                       ndview<Float, 2>& cov,
+                       ndview<Float, 1>& vars,
+                       ndview<Float, 1>& tmp,
+                       const event_vector& deps = {});
+
+/// Compute correlation matrix
 ///
 /// @tparam Float Floating-point type used to perform computations
 ///
@@ -37,11 +72,61 @@ template <typename Float>
 sycl::event correlation(sycl::queue& queue,
                         const ndview<Float, 2>& data,
                         const ndview<Float, 1>& sums,
+                        const ndview<Float, 1>& means,
                         ndview<Float, 2>& corr,
-                        ndview<Float, 1>& means,
                         ndview<Float, 1>& vars,
                         ndview<Float, 1>& tmp,
                         const event_vector& deps = {});
+
+/// Computes correlation matrix and variances
+///
+/// @tparam Float Floating-point type used to perform computations
+///
+/// @param[in]  queue The queue
+/// @param[in]  data  The [n x p] input dataset
+/// @param[in]  sums  The [p] sums computed along each column of the data
+/// @param[out] corr  The [p x p] covariance matrix
+/// @param[out] corr  The [p x p] correlation matrix
+/// @param[out] tmp   The [p] temporary buffer
+template <typename Float>
+sycl::event correlation_with_covariance(sycl::queue& queue,
+                                        const ndview<Float, 2>& data,
+                                        const ndview<Float, 2>& cov,
+                                        ndview<Float, 2>& corr,
+                                        ndview<Float, 1>& tmp,
+                                        const event_vector& deps = {});
+
+/// Computes covariance matrix with distributed
+///
+/// @tparam Float Floating-point type used to perform computations
+///
+/// @param[in]  queue The queue
+/// @param[in]  row_count  The number of rows
+/// @param[in]  sums  The [p] sums computed along each column of the data
+/// @param[out] cov  The [p x p] covariance matrix
+template <typename Float>
+sycl::event covariance_with_distributed(sycl::queue& q,
+                                        std::int64_t row_count,
+                                        const ndview<Float, 1>& sums,
+                                        ndview<Float, 2>& cov,
+                                        const event_vector& deps = {});
+
+/// Computes correlation matrix with distributed
+///
+/// @tparam Float Floating-point type used to perform computations
+///
+/// @param[in]  queue The queue
+/// @param[in]  row_count  The number of rows
+/// @param[in]  sums  The [p] sums computed along each column of the data
+/// @param[out] corr  The [p x p] correlation matrix
+/// @param[out] tmp   The [p] temporary buffer
+template <typename Float>
+sycl::event correlation_with_distributed(sycl::queue& q,
+                                         std::int64_t row_count,
+                                         const ndview<Float, 1>& sums,
+                                         ndview<Float, 2>& corr,
+                                         ndview<Float, 1>& tmp,
+                                         const event_vector& deps = {});
 
 #endif
 

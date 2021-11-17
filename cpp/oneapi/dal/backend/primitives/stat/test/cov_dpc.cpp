@@ -17,6 +17,7 @@
 #include "oneapi/dal/test/engine/common.hpp"
 #include "oneapi/dal/test/engine/fixtures.hpp"
 #include "oneapi/dal/test/engine/dataframe.hpp"
+#include "oneapi/dal/backend/primitives/blas.hpp"
 #include "oneapi/dal/test/engine/io.hpp"
 #include "oneapi/dal/test/engine/math.hpp"
 #include "oneapi/dal/backend/primitives/stat/cov.hpp"
@@ -25,6 +26,7 @@ namespace oneapi::dal::backend::primitives::test {
 
 namespace te = dal::test::engine;
 namespace la = te::linalg;
+namespace pr = dal::backend::primitives;
 
 template <typename Float>
 class cov_test : public te::float_algo_fixture<Float> {
@@ -148,18 +150,10 @@ public:
             17.49, 12.88, 10.2, 16.77, 9.44,
         };
 
-        auto [data, data_event] = ndarray<Float, 2>::copy(this->get_queue(),
-                                                          data_host,
-                                                          { row_count, column_count },
-                                                          sycl::usm::alloc::device);
-
-        auto [sums, sums_event] = ndarray<Float, 1>::copy(this->get_queue(),
-                                                          sums_host,
-                                                          { column_count },
-                                                          sycl::usm::alloc::device);
-
-        data_event.wait_and_throw();
-        sums_event.wait_and_throw();
+        auto data_host_arr = ndarray<Float, 2>::wrap(data_host, { row_count, column_count });
+        auto sums_host_arr = ndarray<Float, 1>::wrap(sums_host, column_count);
+        auto data = data_host_arr.to_device(this->get_queue());
+        auto sums = sums_host_arr.to_device(this->get_queue());
 
         return std::make_tuple(data, sums);
     }
@@ -242,7 +236,9 @@ TEMPLATE_TEST_M(cov_test, "correlation on diagonal data", "[cor]", float, double
     auto sums_event = sums.fill(this->get_queue(), diag_element);
 
     INFO("run correlation");
-    correlation(this->get_queue(), data, sums, corr, means, vars, tmp, { sums_event })
+    auto gemm_event =
+        pr::gemm(this->get_queue(), data.t(), data, corr, float_t(1), float_t(0), { sums_event });
+    correlation(this->get_queue(), data, sums, means, corr, vars, tmp, { gemm_event })
         .wait_and_throw();
 
     // The upper part of data matrix is diagonal. In diagonal matrix each column
@@ -272,6 +268,7 @@ TEMPLATE_TEST_M(cov_test, "correlation on diagonal data", "[cor]", float, double
 }
 
 TEMPLATE_TEST_M(cov_test, "correlation on one-row table", "[cor]", float) {
+    using float_t = TestType;
     // DPC++ GEMM used underneath correlation is not supported on GPU
     SKIP_IF(this->get_policy().is_cpu());
 
@@ -281,10 +278,11 @@ TEMPLATE_TEST_M(cov_test, "correlation on one-row table", "[cor]", float) {
     const auto data = data_host.to_device(this->get_queue());
 
     auto [sums, corr, means, vars, tmp] = this->allocate_arrays(column_count);
-    auto sums_event = sums.assign(this->get_queue(), data_ptr, column_count);
-
+    auto sums_event = sums.assign(this->get_queue(), data.get_data(), column_count);
+    sums_event.wait_and_throw();
     INFO("run correlation");
-    correlation(this->get_queue(), data, sums, corr, means, vars, tmp, { sums_event })
+    auto gemm_event = pr::gemm(this->get_queue(), data.t(), data, corr, float_t(1), float_t(0));
+    correlation(this->get_queue(), data, sums, means, corr, vars, tmp, { gemm_event })
         .wait_and_throw();
 
     INFO("check if there is no NaNs in correlation matrix");
@@ -301,6 +299,7 @@ TEMPLATE_TEST_M(cov_test, "correlation on one-row table", "[cor]", float) {
 }
 
 TEMPLATE_TEST_M(cov_test, "correlation on gold data", "[cor]", float, double) {
+    using float_t = TestType;
     SKIP_IF(this->get_policy().is_cpu());
     SKIP_IF(this->not_float64_friendly());
 
@@ -308,7 +307,9 @@ TEMPLATE_TEST_M(cov_test, "correlation on gold data", "[cor]", float, double) {
     auto [_, corr, means, vars, tmp] = this->allocate_arrays(data.get_dimension(1));
 
     INFO("run correlation");
-    correlation(this->get_queue(), data, sums, corr, means, vars, tmp).wait_and_throw();
+    auto gemm_event = pr::gemm(this->get_queue(), data.t(), data, corr, float_t(1), float_t(0));
+    gemm_event.wait_and_throw();
+    correlation(this->get_queue(), data, sums, means, corr, vars, tmp).wait_and_throw();
 
     this->check_gold_results(corr, means, vars);
 }

@@ -59,13 +59,15 @@ public:
     std::int64_t min_bin_size = 5;
 
     error_metric_mode error_metric_mode_value = error_metric_mode::none;
-    infer_mode infer_mode_value = infer_mode::class_labels;
+    infer_mode infer_mode_value = infer_mode::class_responses;
 
     bool memory_saving_mode = false;
     bool bootstrap = true;
 
     variable_importance_mode variable_importance_mode_value = variable_importance_mode::none;
     voting_mode voting_mode_value = voting_mode::weighted;
+
+    std::int64_t seed = 777;
 };
 
 template <typename Task>
@@ -164,6 +166,11 @@ std::int64_t descriptor_base<Task>::get_class_count_impl() const {
 template <typename Task>
 voting_mode descriptor_base<Task>::get_voting_mode_impl() const {
     return impl_->voting_mode_value;
+}
+
+template <typename Task>
+std::int64_t descriptor_base<Task>::get_seed() const {
+    return impl_->seed;
 }
 
 template <typename Task>
@@ -276,6 +283,11 @@ void descriptor_base<Task>::set_voting_mode_impl(voting_mode value) {
     impl_->voting_mode_value = value;
 }
 
+template <typename Task>
+void descriptor_base<Task>::set_seed_impl(std::int64_t value) {
+    impl_->seed = value;
+}
+
 template class ONEDAL_EXPORT descriptor_base<task::classification>;
 template class ONEDAL_EXPORT descriptor_base<task::regression>;
 
@@ -314,8 +326,23 @@ void model<Task>::traverse_breadth_first_impl(std::int64_t tree_idx,
     impl_->traverse_breadth_first_impl(tree_idx, std::move(visitor));
 }
 
+template <typename Task>
+void model<Task>::serialize(dal::detail::output_archive& ar) const {
+    dal::detail::serialize_polymorphic_shared(impl_, ar);
+}
+
+template <typename Task>
+void model<Task>::deserialize(dal::detail::input_archive& ar) {
+    dal::detail::deserialize_polymorphic_shared(impl_, ar);
+}
+
 template class ONEDAL_EXPORT model<task::classification>;
 template class ONEDAL_EXPORT model<task::regression>;
+
+ONEDAL_REGISTER_SERIALIZABLE(model_impl<task::classification>)
+ONEDAL_REGISTER_SERIALIZABLE(model_impl<task::regression>)
+ONEDAL_REGISTER_SERIALIZABLE(backend::model_interop_cls)
+ONEDAL_REGISTER_SERIALIZABLE(backend::model_interop_reg)
 
 } // namespace v1
 } // namespace oneapi::dal::decision_forest

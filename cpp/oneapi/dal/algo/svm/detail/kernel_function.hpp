@@ -19,6 +19,7 @@
 #include "oneapi/dal/algo/linear_kernel.hpp"
 #include "oneapi/dal/algo/polynomial_kernel.hpp"
 #include "oneapi/dal/algo/rbf_kernel.hpp"
+#include "oneapi/dal/algo/sigmoid_kernel.hpp"
 
 namespace oneapi::dal::svm::detail {
 namespace v1 {
@@ -29,6 +30,12 @@ class kernel_function_iface {
 public:
     virtual ~kernel_function_iface() {}
     virtual kernel_function_impl* get_impl() const = 0;
+#ifdef ONEDAL_DATA_PARALLEL
+    virtual void compute_kernel_function(const dal::detail::data_parallel_policy& policy,
+                                         const table& x,
+                                         const table& y,
+                                         homogen_table& res) = 0;
+#endif
 };
 
 using kernel_function_ptr = std::shared_ptr<kernel_function_iface>;
@@ -58,6 +65,12 @@ public:
     using kernel_t = linear_kernel::descriptor<Float, Method>;
     explicit kernel_function(const kernel_t& kernel);
     kernel_function_impl* get_impl() const override;
+#ifdef ONEDAL_DATA_PARALLEL
+    void compute_kernel_function(const dal::detail::data_parallel_policy& policy,
+                                 const table& x,
+                                 const table& y,
+                                 homogen_table& res) override;
+#endif
 
 private:
     kernel_t kernel_;
@@ -71,6 +84,12 @@ public:
     using kernel_t = polynomial_kernel::descriptor<Float, Method>;
     explicit kernel_function(const kernel_t& kernel);
     kernel_function_impl* get_impl() const override;
+#ifdef ONEDAL_DATA_PARALLEL
+    void compute_kernel_function(const dal::detail::data_parallel_policy& policy,
+                                 const table& x,
+                                 const table& y,
+                                 homogen_table& res) override;
+#endif
 
 private:
     kernel_t kernel_;
@@ -84,6 +103,31 @@ public:
     using kernel_t = rbf_kernel::descriptor<Float, Method>;
     explicit kernel_function(const kernel_t& kernel);
     kernel_function_impl* get_impl() const override;
+#ifdef ONEDAL_DATA_PARALLEL
+    void compute_kernel_function(const dal::detail::data_parallel_policy& policy,
+                                 const table& x,
+                                 const table& y,
+                                 homogen_table& res) override;
+#endif
+
+private:
+    kernel_t kernel_;
+    dal::detail::pimpl<kernel_function_impl> impl_;
+};
+
+template <typename Float, typename Method>
+class kernel_function<sigmoid_kernel::descriptor<Float, Method>> : public base,
+                                                                   public kernel_function_iface {
+public:
+    using kernel_t = sigmoid_kernel::descriptor<Float, Method>;
+    explicit kernel_function(const kernel_t& kernel);
+    kernel_function_impl* get_impl() const override;
+#ifdef ONEDAL_DATA_PARALLEL
+    void compute_kernel_function(const dal::detail::data_parallel_policy& policy,
+                                 const table& x,
+                                 const table& y,
+                                 homogen_table& res) override;
+#endif
 
 private:
     kernel_t kernel_;
@@ -103,6 +147,11 @@ kernel_function_impl* get_kernel_function_impl(Descriptor&& desc) {
     return kernel ? kernel->get_impl() : nullptr;
 }
 
+template <typename Descriptor>
+const kernel_function_ptr& get_kernel_ptr(Descriptor&& desc) {
+    return kernel_function_accessor{}.get_kernel_impl(std::forward<Descriptor>(desc));
+}
+
 } // namespace v1
 
 using v1::kernel_function_impl;
@@ -111,5 +160,6 @@ using v1::kernel_function_ptr;
 using v1::kernel_function;
 using v1::kernel_function_accessor;
 using v1::get_kernel_function_impl;
+using v1::get_kernel_ptr;
 
 } // namespace oneapi::dal::svm::detail

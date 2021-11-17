@@ -31,45 +31,76 @@ public:
     /// Performs K-selection on each row of a matrix
     ///
     /// @param[in]  queue           The queue
-    /// @param[in]  data            The [nxm] matrix to be processed
+    /// @param[in]  data            The [n x m] matrix to be processed
     /// @param[in]  k               The number of minimal values to be selected in each row
     /// @param[out] selection       The [n x k] matrix of selected values
     /// @param[out] column_indices  The [n x k] matrix of indices of selected values
-    virtual sycl::event operator()(sycl::queue& queue,
-                                   const ndview<Float, 2>& data,
-                                   std::int64_t k,
-                                   ndview<Float, 2>& selection,
-                                   ndview<std::int32_t, 2>& column_indices,
-                                   const event_vector& deps = {}) override {
+    sycl::event operator()(sycl::queue& queue,
+                           const ndview<Float, 2>& data,
+                           std::int64_t k,
+                           ndview<Float, 2>& selection,
+                           ndview<std::int32_t, 2>& column_indices,
+                           const event_vector& deps = {}) override {
         return base_->operator()(queue, data, k, selection, column_indices, deps);
     }
 
     /// Performs K-selection on each row of a matrix
     ///
     /// @param[in]  queue       The queue
-    /// @param[in]  data        The [nxm] matrix to be processed
+    /// @param[in]  data        The [n x m] matrix to be processed
     /// @param[in]  k           The number of minimal values to be selected in each row
     /// @param[out] selection   The [n x k] matrix of selected values
-    virtual sycl::event operator()(sycl::queue& queue,
-                                   const ndview<Float, 2>& data,
-                                   std::int64_t k,
-                                   ndview<Float, 2>& selection,
-                                   const event_vector& deps = {}) override {
+    sycl::event operator()(sycl::queue& queue,
+                           const ndview<Float, 2>& data,
+                           std::int64_t k,
+                           ndview<Float, 2>& selection,
+                           const event_vector& deps = {}) override {
         return base_->operator()(queue, data, k, selection, deps);
     }
 
     /// Performs K-selection on each row of a matrix
     ///
     /// @param[in]  queue           The queue
-    /// @param[in]  data            The [nxm] matrix to be processed
+    /// @param[in]  data            The [n x m] matrix to be processed
     /// @param[in]  k               The number of minimal values to be selected in each row
     /// @param[out] column_indices  The [n x k] matrix of indices of selected values
-    virtual sycl::event operator()(sycl::queue& queue,
-                                   const ndview<Float, 2>& data,
-                                   std::int64_t k,
-                                   ndview<std::int32_t, 2>& column_indices,
-                                   const event_vector& deps = {}) override {
+    sycl::event operator()(sycl::queue& queue,
+                           const ndview<Float, 2>& data,
+                           std::int64_t k,
+                           ndview<std::int32_t, 2>& column_indices,
+                           const event_vector& deps = {}) override {
         return base_->operator()(queue, data, k, column_indices, deps);
+    }
+
+    sycl::event select_sq_l2(sycl::queue& queue,
+                             const ndview<Float, 1>& n1,
+                             const ndview<Float, 1>& n2,
+                             const ndview<Float, 2>& ip,
+                             std::int64_t k,
+                             ndview<Float, 2>& selection,
+                             ndview<std::int32_t, 2>& column_indices,
+                             const event_vector& deps = {}) override {
+        return base_->select_sq_l2(queue, n1, n2, ip, k, selection, column_indices, deps);
+    }
+
+    sycl::event select_sq_l2(sycl::queue& queue,
+                             const ndview<Float, 1>& n1,
+                             const ndview<Float, 1>& n2,
+                             const ndview<Float, 2>& ip,
+                             std::int64_t k,
+                             ndview<Float, 2>& selection,
+                             const event_vector& deps = {}) override {
+        return base_->select_sq_l2(queue, n1, n2, ip, k, selection, deps);
+    }
+
+    sycl::event select_sq_l2(sycl::queue& queue,
+                             const ndview<Float, 1>& n1,
+                             const ndview<Float, 1>& n2,
+                             const ndview<Float, 2>& ip,
+                             std::int64_t k,
+                             ndview<std::int32_t, 2>& column_indices,
+                             const event_vector& deps = {}) override {
+        return base_->select_sq_l2(queue, n1, n2, ip, k, column_indices, deps);
     }
 
 private:

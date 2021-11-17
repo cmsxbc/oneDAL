@@ -26,6 +26,9 @@ namespace v1 {
 
 /* Common */
 MSG(array_does_not_contain_mutable_data, "Array does not contain mutable data")
+MSG(algorithm_is_not_implemented_for_this_device,
+    "Algorithm is not implemented for this device. "
+    "Consider running on it on the other device.")
 MSG(feature_index_is_out_of_range, "Feature index is out of range")
 MSG(incompatible_array_reinterpret_cast_types,
     "Cannot reinterpret array to provided type, "
@@ -39,6 +42,11 @@ MSG(unsupported_data_layout, "Unsupported data layout")
 MSG(unsupported_data_type, "Requested data type is not supported")
 MSG(unsupported_device_type, "Requested device type is not supported")
 MSG(small_data_block, "Data block size is smaller than expected")
+MSG(spmd_version_of_algorithm_is_not_implemented,
+    "SPMD version of the algorithm is not implemented")
+MSG(spmd_version_of_algorithm_is_not_implemented_for_this_device,
+    "SPMD version of the algorithm is not implemented for this device. "
+    "Consider running on it on the other device.")
 MSG(invalid_data_block_size, "Invalid data block size")
 MSG(method_not_implemented, "Method is not implemented")
 MSG(unsupported_feature_type, "Feature type is not supported")
@@ -49,11 +57,16 @@ MSG(unsupported_usm_alloc, "Requested USM alloc type is not supported")
 MSG(page_size_leq_zero, "Page size is lower than or equal to zero")
 MSG(invalid_key, "Cannot find the given key")
 MSG(capacity_leq_zero, "Capacity is lower than or equal to zero")
+MSG(empty_set_of_result_options, "Empty set of result options")
+MSG(this_result_is_not_enabled_via_result_options, "This result is not enabled via result options")
+MSG(spmd_error_holder_message, "SPMD failure occurred, use e.rethrow_actual() to get actual error")
+MSG(spmd_coworker_failure, "SPMD execution was interrupted because of coworker's failure")
 
 /* Primitives */
 MSG(invalid_number_of_elements_to_process, "Invalid number of elements to process")
 MSG(invalid_number_of_elements_to_sort, "Invalid number of elements to sort")
 MSG(failed_to_compute_eigenvectors, "Failed to compute eigenvectors")
+MSG(failed_to_generate_random_numbers, "Failed to generate random numbers")
 
 /* Tables */
 MSG(allocated_memory_size_is_not_enough_to_copy_data,
@@ -98,6 +111,11 @@ MSG(invalid_range_of_rows, "Invalid range of rows")
 MSG(invalid_range_of_columns, "Invalid range of columns")
 MSG(column_index_out_of_range, "Column index out of range")
 
+/* RNG */
+MSG(rng_engine_does_not_support_parallelization_techniques,
+    "Random number generation engine doesn't support parallelization techniques")
+MSG(rng_engine_is_not_supported, "Random number generation engine isn't supported")
+
 /* Graphs */
 MSG(vertex_index_out_of_range_expect_from_zero_to_vertex_count,
     "Vertex index is out of range, expect index in [0, vertex_count)")
@@ -106,6 +124,7 @@ MSG(unimplemented_sorting_procedure, "Unimplemented sorting procedure")
 
 /* IO */
 MSG(file_not_found, "File not found")
+MSG(unsupported_read_mode, "Unsupported read mode")
 
 /* Serialization */
 MSG(object_is_not_serializable, "Object is not serializable")
@@ -118,17 +137,17 @@ MSG(archive_is_in_invalid_state,
 MSG(accuracy_threshold_lt_zero, "Accuracy_threshold is lower than zero")
 MSG(class_count_leq_one, "Class count is lower than or equal to one")
 MSG(input_data_is_empty, "Input data is empty")
-MSG(input_data_rc_neq_input_labels_rc,
-    "Input data row count is not equal to input labels row count")
+MSG(input_data_rc_neq_input_responses_rc,
+    "Input data row count is not equal to input responses row count")
 MSG(input_data_rc_neq_input_weights_rc,
     "Input data row count is not equal to input weights row count")
-MSG(input_labels_are_empty, "Labels are empty")
-MSG(input_labels_contain_only_one_unique_value_expect_two,
-    "Input labels contain only one unique value, two unique values are expected")
-MSG(input_labels_contain_wrong_unique_values_count_expect_two,
+MSG(input_responses_are_empty, "Responses are empty")
+MSG(input_responses_contain_only_one_unique_value_expect_two,
+    "Input responses contain only one unique value, two unique values are expected")
+MSG(input_responses_contain_wrong_unique_values_count_expect_two,
     "Input labels contain wrong number of unique values, two unique values are expected")
-MSG(input_labels_table_has_wrong_cc_expect_one,
-    "Input labels table has wrong column count, one column is expected")
+MSG(input_responses_table_has_wrong_cc_expect_one,
+    "Input responses table has wrong column count, one column is expected")
 MSG(iteration_count_lt_zero, "Iteration count is lower than zero")
 MSG(max_iteration_count_leq_zero, "Max iteration count lower than or equal to zero")
 MSG(max_iteration_count_lt_zero, "Max iteration count lower than zero")
@@ -157,10 +176,17 @@ MSG(objective_function_value_lt_zero, "Objective function value is lower than ze
 /* k-NN */
 MSG(knn_kd_tree_method_is_not_implemented_for_gpu,
     "k-NN k-d tree method is not implemented for GPU")
+MSG(knn_regression_task_is_not_implemented_for_cpu,
+    "k-NN regression task is not implemented for CPU")
+MSG(knn_search_task_is_not_implemented_for_gpu, "k-NN search task is not implemented for GPU")
 MSG(neighbor_count_lt_one, "Neighbor count lower than one")
 MSG(unknown_distance_type,
     "Custom distances for k-NN is not supported, use one of the predefined distances instead.")
-MSG(distance_is_not_supported_for_gpu, "Only Euclidean distances for k-NN is supported for GPU")
+MSG(distance_is_not_supported_for_gpu, "Only Minkowsky distances for k-NN are supported for GPU")
+MSG(incompatible_knn_model,
+    "The provided model is incompatible with the selected k-NN task or method")
+MSG(invalid_set_of_result_options_to_search,
+    "Provided results options are incompatible with the search task. Search task cannot compute responses.")
 
 /* Minkowski distance */
 MSG(invalid_minkowski_degree, "Minkowski degree should be greater than zero")
@@ -179,8 +205,9 @@ MSG(empty_target_graph, "Empty target graph")
 MSG(empty_pattern_graph, "Empty pattern graph")
 MSG(subgraph_isomorphism_is_not_implemented_for_labeled_edges,
     "Subgraph isomorphism is not implemented for labeled edges")
-MSG(non_zero_max_match_count_is_not_supported, "Non-zero max_match_count is not supported")
 MSG(incorrect_index_is_returned, "Internal error: incorrect index is returned")
+MSG(invalid_vertex_edge_attributes, "Internal error: invalid vertex/edge attributes")
+MSG(target_graph_is_smaller_than_pattern_graph, "Target graph is smaller than pattern graph")
 
 /* PCA */
 MSG(component_count_lt_zero, "Component count is lower than zero")
@@ -221,7 +248,8 @@ MSG(nu_leq_zero, "Nu is lower than or equal to zero")
 MSG(nu_svm_smo_method_is_not_implemented_for_gpu, "nuSVM SMO method is not implemented for GPU")
 MSG(nu_svm_thunder_method_is_not_implemented_for_gpu,
     "nuSVM Thunder method is not implemented for GPU")
-MSG(polynomial_kenrel_is_not_implemented_for_gpu, "Polynomial kernel is not implemented for GPU")
+MSG(polynomial_kernel_is_not_implemented_for_gpu, "Polynomial kernel is not implemented for GPU")
+MSG(sigmoid_kernel_is_not_implemented_for_gpu, "Sigmoid kernel is not implemented for GPU")
 MSG(sigma_leq_zero, "Sigma lower than or equal to zero")
 MSG(svm_multiclass_not_implemented_for_gpu,
     "SVM with multiclass support is not implemented for GPU")
@@ -252,6 +280,43 @@ MSG(decision_forest_train_dense_method_is_not_implemented_for_gpu,
 MSG(decision_forest_train_hist_method_is_not_implemented_for_cpu,
     "Decision forest train hist method is not implemented for CPU")
 MSG(input_model_is_not_initialized, "Input model is not initialized")
+MSG(not_enough_memory_to_build_one_tree, "There isn't enough memory to build one tree")
+MSG(invalid_number_of_trees, "Invalid number of trees")
+MSG(invalid_number_of_min_observations_in_leaf_node,
+    "Invalid number of min observations in leaf node")
+MSG(invalid_number_of_feature_per_node, "Invalid number of features per node")
+MSG(invalid_number_of_max_bins, "Invalid max number of bins")
+MSG(invalid_value_for_min_bin_size, "Invalid value for min bin size")
+MSG(invalid_number_of_classes, "Invalid number of classes")
+MSG(invalid_value_for_observations_per_tree_fraction,
+    "Invalid value for observations per tree fraction")
+MSG(input_model_tree_has_invalid_size, "Input model tree size is invalid")
+
+/* DBSCAN */
+MSG(weight_dimension_doesnt_match_data_dimension,
+    "Weights dimensions doesn't match data dimensions")
+MSG(weights_column_count_ne_1, "Weights is not a single-column table")
+
+/* Louvain */
+MSG(negative_resolution, "Resolution parameter is lower than zero")
+MSG(input_initial_partition_table_rc_neq_vertex_count,
+    "Input initial partition table row count is not equal to vertex count")
+MSG(input_initial_partition_table_has_wrong_cc_expect_one,
+    "Input initial partition table has wrong column count, one column is expected")
+MSG(negative_initial_partition_label, "Input initial partition label is negative")
+MSG(initial_partition_label_gte_vertex_count,
+    "Input initial partition label is greater than or equal to vertex count")
+
+/* SPMD */
+MSG(unsupported_communicator_backend, "SPMD: unsupported communicator backend")
+MSG(invalid_data_type, "SPMD: invalid data type")
+MSG(invalid_op,
+    "SPMD: invalid operation. Only predefined reduction and other operations can be used")
+MSG(invalid_buffer, "SPMD: invalid buffer pointer")
+MSG(invalid_count, "SPMD: invalid data count")
+MSG(invalid_mpi_comm, "SPMD: invalid mpi communicator")
+MSG(invalid_root, "SPMD: invalid root")
+MSG(unknown_mpi_error, "SPMD: unknown MPI error")
 
 } // namespace v1
 } // namespace oneapi::dal::detail

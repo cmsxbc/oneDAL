@@ -20,6 +20,7 @@
 #include "oneapi/dal/table/common.hpp"
 #include "oneapi/dal/util/common.hpp"
 #include "oneapi/dal/algo/decision_tree/detail/node_visitor.hpp"
+#include "oneapi/dal/detail/serialization.hpp"
 
 namespace oneapi::dal::decision_forest {
 
@@ -100,7 +101,9 @@ enum class error_metric_mode : std::uint64_t {
 /// Available identifiers to specify the infer mode
 enum class infer_mode : std::uint64_t {
     /// Infer produces a $n \\times 1$  table with the predicted labels
-    class_labels = 0x00000001ULL,
+    class_labels = 0x00000001ULL, /// deprecated
+    /// Infer produces a $n \\times 1$  table with the predicted responses
+    class_responses = class_labels,
     /// Infer produces $n \\times c$ table with the predicted class probabilities for each observation
     class_probabilities = 0x00000002ULL
 };
@@ -227,6 +230,8 @@ public:
         return get_voting_mode_impl();
     }
 
+    std::int64_t get_seed() const;
+
 protected:
     void set_observations_per_tree_fraction_impl(double value);
     void set_impurity_threshold_impl(double value);
@@ -251,6 +256,8 @@ protected:
     std::int64_t get_class_count_impl() const;
     infer_mode get_infer_mode_impl() const;
     voting_mode get_voting_mode_impl() const;
+
+    void set_seed_impl(std::int64_t value);
 
 private:
     dal::detail::pimpl<descriptor_impl<Task>> impl_;
@@ -554,6 +561,16 @@ public:
         base_t::set_voting_mode_impl(value);
         return *this;
     }
+
+    /// Seed for the random numbers generator used by the algorithm
+    /// @invariant :expr:`tree_count > 0`
+    std::int64_t get_seed() const {
+        return base_t::get_seed();
+    }
+
+    auto& set_seed(std::int64_t value) {
+        return base_t::set_seed(value);
+    }
 };
 
 /// @tparam Task   Tag-type that specifies the type of the problem to solve. Can
@@ -562,6 +579,7 @@ template <typename Task = task::by_default>
 class model : public base {
     static_assert(detail::is_valid_task_v<Task>);
     friend dal::detail::pimpl_accessor;
+    friend dal::detail::serialization_accessor;
 
     using dtree_task_t = detail::decision_tree_task_map_t<Task>;
     using dtree_visitor_iface_t = detail::decision_tree_visitor_ptr<Task>;
@@ -615,6 +633,9 @@ protected:
     void traverse_breadth_first_impl(std::int64_t tree_idx, dtree_visitor_iface_t&& visitor) const;
 
 private:
+    void serialize(dal::detail::output_archive& ar) const;
+    void deserialize(dal::detail::input_archive& ar);
+
     explicit model(const std::shared_ptr<detail::model_impl<Task>>& impl);
     dal::detail::pimpl<detail::model_impl<Task>> impl_;
 };
